@@ -113,7 +113,7 @@ const useGeminiLive = (setTranscriptionHistory: Dispatch<SetStateAction<Transcri
 
     const apiKey = process.env.API_KEY;
     if (!apiKey) {
-      const errorMessage = "API की सापडली नाही. कृपया खात्री करा की ती योग्यरित्या सेट केली आहे.";
+      const errorMessage = "API की सापडली नाही. कृपया पेज रिफ्रेश करून पुन्हा API की निवडा.";
       console.error(errorMessage);
       setError(errorMessage);
       setStatus(ConversationStatus.ERROR);
@@ -292,14 +292,16 @@ const useGeminiLive = (setTranscriptionHistory: Dispatch<SetStateAction<Transcri
                 let userMessage = "कनेक्शनमध्ये अडचण येत आहे. कृपया तुमचे इंटरनेट व्यवस्थित चालू आहे का ते तपासा आणि थोड्या वेळाने पुन्हा प्रयत्न करा.";
                 if (e.message) {
                     const message = e.message.toLowerCase();
-                    if (message.includes('network error')) {
-                         userMessage = "नेटवर्कमध्ये समस्या आहे. कृपया तुमचे इंटरनेट कनेक्शन तपासा आणि पेज रिफ्रेश करून पुन्हा प्रयत्न करा. समस्या कायम राहिल्यास, तुमची API की योग्य असल्याची खात्री करा.";
+                    if (message.includes('requested entity was not found')) {
+                        userMessage = "निवडलेली API की सापडली नाही. कृपया पेज रिफ्रेश करून दुसरी की निवडा.";
+                    } else if (message.includes('network error')) {
+                         userMessage = "नेटवर्कमध्ये समस्या आहे. कृपया तुमचे इंटरनेट कनेक्शन तपासा आणि पेज रिफ्रेश करून पुन्हा प्रयत्न करा.";
                     } else if (message.includes('service is currently unavailable')) {
                         userMessage = "सेवा तात्पुरती अनुपलब्ध आहे. कृपया थोड्या वेळाने पुन्हा प्रयत्न करा.";
                     } else if (message.includes('invalid argument')) {
                         userMessage = "चुकीची विनंती पाठवली गेली. कृपया पुन्हा प्रयत्न करा.";
                     } else if (message.includes('api key not valid')) {
-                        userMessage = "तुमची API की चुकीची आहे. कृपया योग्य की वापरून पुन्हा प्रयत्न करा.";
+                        userMessage = "तुमची API की चुकीची आहे. कृपया पेज रिफ्रेश करून योग्य की निवडा.";
                     } else if (message.includes('does not have permission')) {
                         userMessage = "API की वापरण्याची परवानगी नाही. कृपया खात्री करा की तुमची API की योग्य आहे आणि आवश्यक परवानग्या सक्षम केल्या आहेत.";
                     }

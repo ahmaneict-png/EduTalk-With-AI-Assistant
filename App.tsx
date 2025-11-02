@@ -14,18 +14,60 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
+// Fix: Define the AIStudio interface to resolve a TypeScript type conflict with an existing global definition.
+interface AIStudio {
+  hasSelectedApiKey: () => Promise<boolean>;
+  openSelectKey: () => Promise<void>;
+}
+
+// Add window.aistudio type definition
+declare global {
+  interface Window {
+    aistudio?: AIStudio;
+  }
+}
 
 const App: React.FC = () => {
   const [selectedSubject, setSelectedSubject] = useState<'marathi' | 'hindi' | 'english' | 'math' | null>(null);
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [isShareMode, setIsShareMode] = useState(false);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [isKeySelected, setIsKeySelected] = useState(false);
+  const [isCheckingKey, setIsCheckingKey] = useState(true);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('mode') === 'share') {
       setIsShareMode(true);
     }
+  }, []);
+
+  useEffect(() => {
+    const checkApiKey = async () => {
+      // In share mode, we don't need an API key to show the initial page.
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('mode') === 'share') {
+        setIsKeySelected(true);
+        setIsCheckingKey(false);
+        return;
+      }
+
+      if (window.aistudio) {
+        try {
+          const hasKey = await window.aistudio.hasSelectedApiKey();
+          setIsKeySelected(hasKey);
+        } catch (e) {
+          console.error("Error checking for API key:", e);
+          setIsKeySelected(false); // Assume no key if check fails
+        }
+      } else {
+        // Fallback for non-aistudio environments (e.g., local dev)
+        // The app will proceed, and useGeminiLive hook will show an error if process.env.API_KEY is not set.
+        setIsKeySelected(true); 
+      }
+      setIsCheckingKey(false);
+    };
+    checkApiKey();
   }, []);
 
   useEffect(() => {
@@ -66,6 +108,13 @@ const App: React.FC = () => {
     localStorage.setItem('installBannerDismissed', 'true');
     setShowInstallBanner(false);
   };
+  
+  const handleSelectKey = async () => {
+    if (window.aistudio) {
+      await window.aistudio.openSelectKey();
+      setIsKeySelected(true);
+    }
+  };
 
   const getOriginalAppUrl = () => {
     let origin = window.location.origin;
@@ -74,6 +123,34 @@ const App: React.FC = () => {
     }
     return `${origin}${window.location.pathname}`;
   };
+
+  if (isCheckingKey) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#fff5e6] to-[#f3e6ff] flex items-center justify-center">
+        <div className="text-purple-700 font-semibold text-lg animate-pulse">ॲप लोड होत आहे...</div>
+      </div>
+    );
+  }
+  
+  if (!isKeySelected) {
+    return (
+       <div className="min-h-screen bg-gradient-to-br from-[#fff5e6] to-[#f3e6ff] flex items-center justify-center p-4">
+        <div className="max-w-xl mx-auto text-center bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl p-6 md:p-10">
+          <h2 className="text-2xl font-bold text-purple-800">API की आवश्यक आहे</h2>
+          <p className="mt-4 text-gray-700">
+            हे ॲप वापरण्यासाठी, तुम्हाला Google AI Studio API की निवडणे आवश्यक आहे.
+            तुमच्या वापरासाठी बिलिंग लागू होऊ शकते. अधिक माहितीसाठी, कृपया <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline font-semibold">बिलिंग दस्तऐवज</a> पहा.
+          </p>
+          <button
+            onClick={handleSelectKey}
+            className="mt-6 inline-block bg-purple-600 text-white font-bold py-3 px-8 rounded-full hover:bg-purple-700 transition-colors shadow-lg"
+          >
+            API की निवडा
+          </button>
+        </div>
+      </div>
+    );
+  }
 
 
   return (
