@@ -1,0 +1,7 @@
+{
+  "name": "EduTalk With AI Assistant",
+  "description": "An AI-powered conversational assistant for students of Yashwantrao Chavan Vidyalaya to learn Marathi grammar by speaking their questions.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

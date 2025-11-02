@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="mr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>मराठी व्याकरण सहाय्यक</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#6b21a8">
+    <style>
+      body {
+        font-family: 'Noto Sans Devanagari', sans-serif;
+      }
+      @keyframes fade-in-up {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-fade-in-up {
+        animation: fade-in-up 0.5s ease-out forwards;
+      }
+
+      /* --- Typewriter Animation for Header --- */
+      @keyframes typing {
+        from { width: 0; }
+        to { width: 100%; }
+      }
+
+      @keyframes blink-caret {
+        from, to { border-color: transparent; }
+        50% { border-color: #a855f7; } /* Corresponds to Tailwind purple-500 */
+      }
+      
+      .typewriter h2 {
+        display: inline-block;
+        overflow: hidden; /* Ensures the content is not revealed until the animation */
+        border-right: .15em solid #a855f7; /* The typewriter cursor */
+        white-space: nowrap; /* Keeps the content on a single line */
+        animation: 
+          typing 3s steps(35, end) forwards,
+          blink-caret .75s step-end infinite;
+      }
+
+      /* --- Glowing Border Animation --- */
+      .glowing-box {
+        position: relative;
+        z-index: 1;
+        overflow: hidden; /* Contains the animation */
+      }
+
+      .glowing-box::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        z-index: -1;
+        /* This creates the moving LED effect */
+        background: conic-gradient(
+          transparent 0deg,
+          transparent 330deg,
+          #ec4899 345deg, /* pink */
+          #a855f7 360deg  /* purple */
+        );
+        animation: rotate-border 3s linear infinite;
+      }
+
+      @keyframes rotate-border {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* --- Blinking light for text --- */
+      @keyframes blink-light {
+        0%, 100% {
+          opacity: 1;
+          text-shadow: 0 0 5px rgba(168, 85, 247, 0.4), 0 0 10px rgba(168, 85, 247, 0.3);
+        }
+        50% {
+          opacity: 0.85;
+          text-shadow: none;
+        }
+      }
+      .animate-blink-light {
+        animation: blink-light 2s infinite ease-in-out;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.25.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          }).catch(err => {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+        });
+      }
+    </script>
+  </body>
+</html>
