@@ -14,18 +14,20 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
-// Fix: Define the AIStudio interface to resolve a TypeScript type conflict with an existing global definition.
-interface AIStudio {
-  hasSelectedApiKey: () => Promise<boolean>;
-  openSelectKey: () => Promise<void>;
-}
-
 // Add window.aistudio type definition
 declare global {
+  // Fix: Define the AIStudio interface inside `declare global` to resolve a TypeScript type conflict
+  // with a potentially existing global definition and ensure a single, globally-scoped type.
+  interface AIStudio {
+    hasSelectedApiKey: () => Promise<boolean>;
+    openSelectKey: () => Promise<void>;
+  }
+  
   interface Window {
     aistudio?: AIStudio;
   }
 }
+
 
 const App: React.FC = () => {
   const [selectedSubject, setSelectedSubject] = useState<'marathi' | 'hindi' | 'english' | 'math' | null>(null);
@@ -61,9 +63,8 @@ const App: React.FC = () => {
           setIsKeySelected(false); // Assume no key if check fails
         }
       } else {
-        // Fallback for non-aistudio environments (e.g., local dev)
-        // The app will proceed, and useGeminiLive hook will show an error if process.env.API_KEY is not set.
-        setIsKeySelected(true); 
+        // Not in AI Studio, assume API_KEY is in environment per guidelines.
+        setIsKeySelected(true);
       }
       setIsCheckingKey(false);
     };

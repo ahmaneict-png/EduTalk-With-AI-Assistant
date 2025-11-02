@@ -111,20 +111,12 @@ const useGeminiLive = (setTranscriptionHistory: Dispatch<SetStateAction<Transcri
     setCurrentTranscription({ user: '', model: '' });
     hasConversationStartedRef.current = false;
 
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) {
-      const errorMessage = "API की सापडली नाही. कृपया पेज रिफ्रेश करून पुन्हा API की निवडा.";
-      console.error(errorMessage);
-      setError(errorMessage);
-      setStatus(ConversationStatus.ERROR);
-      return;
-    }
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
 
-      const ai = new GoogleGenAI({ apiKey });
+      // FIX: Per guidelines, initialize with process.env.API_KEY
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
       outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
       
@@ -284,6 +276,8 @@ const useGeminiLive = (setTranscriptionHistory: Dispatch<SetStateAction<Transcri
             setStatus(ConversationStatus.IDLE);
             cleanup();
           },
+          // FIX: Removed local environment logic and sessionStorage usage from error handling
+          // to align with API key guidelines. Error messages are simplified.
           onerror: (e: ErrorEvent) => {
             console.error("Session error:", e);
             if (!navigator.onLine) {
