@@ -309,9 +309,19 @@ const useGeminiLive = (setTranscriptionHistory: Dispatch<SetStateAction<Transcri
       });
     } catch (error) {
       console.error("Failed to start session:", error);
-      let errorMessage = "संभाषण सुरू करता आले नाही.";
-      if (error instanceof Error && error.name === 'NotAllowedError') {
-        errorMessage = "मायक्रोफोन वापरण्याची परवानगी आवश्यक आहे.";
+      let errorMessage = "संभाषण सुरू करता आले नाही. कृपया तुमचे इंटरनेट कनेक्शन आणि मायक्रोफोन तपासा.";
+      if (error instanceof Error) {
+        switch (error.name) {
+          case 'NotAllowedError':
+            errorMessage = "मायक्रोफोन वापरण्याची परवानगी आवश्यक आहे. कृपया पेज रिफ्रेश करून परवानगी द्या.";
+            break;
+          case 'NotFoundError':
+            errorMessage = "मायक्रोफोन सापडला नाही. कृपया तुमचा मायक्रोफोन कनेक्ट केलेला आहे का आणि तो व्यवस्थित काम करत आहे का, हे तपासा.";
+            break;
+          case 'NotReadableError':
+            errorMessage = "तुमचा मायक्रोफोन वापरता येत नाही आहे. कदाचित दुसरे ॲप्लिकेशन तो वापरत असेल. कृपया इतर ॲप्स बंद करून पुन्हा प्रयत्न करा.";
+            break;
+        }
       }
       setError(errorMessage);
       setStatus(ConversationStatus.ERROR);
