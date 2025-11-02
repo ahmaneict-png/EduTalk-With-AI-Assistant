@@ -111,41 +111,51 @@ const ConversationManager: React.FC<ConversationManagerProps> = ({ subject, onGo
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+        <div className="flex flex-col items-center justify-center gap-4 mb-6">
           {isSessionRunning ? (
-            <button
-              onClick={handleStop}
-              disabled={status === ConversationStatus.CONNECTING}
-              className={`px-10 py-4 text-lg font-bold text-white rounded-full shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 w-full sm:w-auto
-                ${status === ConversationStatus.CONNECTING ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600 focus:ring-red-300'}
-              `}
-            >
-              {status === ConversationStatus.CONNECTING ? strings.connecting : strings.stopSession}
-            </button>
-          ) : (
              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
-              <button onClick={onGoBack} className="px-4 py-2 text-sm font-bold text-gray-600 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors">
+                <button
+                  onClick={handleStop}
+                  disabled={status === ConversationStatus.CONNECTING}
+                  className={`px-10 py-4 text-lg font-bold text-white rounded-full shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 w-full sm:w-auto
+                    ${status === ConversationStatus.CONNECTING ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600 focus:ring-red-300'}
+                  `}
+                >
+                  {status === ConversationStatus.CONNECTING ? strings.connecting : strings.stopSession}
+                </button>
+                <StatusIndicator status={status} subject={subject} />
+              </div>
+          ) : (
+            <div className="flex flex-col items-center w-full gap-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+                  <button
+                      onClick={() => handleStart(false)}
+                      disabled={!userName.trim()}
+                      className="px-8 py-4 text-lg font-bold text-white rounded-full shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 bg-green-500 hover:bg-green-600 focus:ring-green-300 w-full sm:w-auto disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none"
+                  >
+                      {strings.startConversation}
+                  </button>
+                  <button
+                      onClick={() => handleStart(true)}
+                      disabled={!userName.trim()}
+                      className="relative px-8 py-4 text-lg font-bold text-white rounded-full shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 bg-purple-600 hover:bg-purple-700 focus:ring-purple-400 w-full sm:w-auto flex items-center justify-center gap-2 overflow-hidden disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none"
+                  >
+                      <span className="absolute -top-1 -left-1 bg-yellow-300 text-yellow-800 text-xs font-bold px-2 py-0.5 rounded-full transform -rotate-12">{strings.newBadge}</span>
+                      <span role="img" aria-label="sparkles">✨</span>
+                      <span>{strings.startQuiz}</span>
+                  </button>
+                  <div className="hidden sm:flex">
+                     <StatusIndicator status={status} subject={subject} />
+                  </div>
+              </div>
+               <button onClick={onGoBack} className="px-4 py-2 text-sm font-bold text-gray-600 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors">
                 &larr; {strings.goBack}
               </button>
-              <button
-                  onClick={() => handleStart(false)}
-                  disabled={!userName.trim()}
-                  className="px-8 py-4 text-lg font-bold text-white rounded-full shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 bg-green-500 hover:bg-green-600 focus:ring-green-300 w-full sm:w-auto disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none"
-              >
-                  {strings.startConversation}
-              </button>
-              <button
-                  onClick={() => handleStart(true)}
-                  disabled={!userName.trim()}
-                  className="relative px-8 py-4 text-lg font-bold text-white rounded-full shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 bg-purple-600 hover:bg-purple-700 focus:ring-purple-400 w-full sm:w-auto flex items-center justify-center gap-2 overflow-hidden disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none"
-              >
-                  <span className="absolute -top-1 -left-1 bg-yellow-300 text-yellow-800 text-xs font-bold px-2 py-0.5 rounded-full transform -rotate-12">{strings.newBadge}</span>
-                  <span role="img" aria-label="sparkles">✨</span>
-                  <span>{strings.startQuiz}</span>
-              </button>
+              <div className="sm:hidden">
+                 <StatusIndicator status={status} subject={subject} />
+              </div>
             </div>
           )}
-          <StatusIndicator status={status} subject={subject} />
         </div>
 
         {error && (

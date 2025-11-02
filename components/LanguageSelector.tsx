@@ -31,7 +31,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ onSelect }) => {
         <div className="relative w-full max-w-md mx-auto aspect-square p-4 bg-purple-100/50 rounded-2xl border-2 border-dashed border-purple-300">
             {/* Title placed in the center */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center z-10">
-                <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 animate-blink-light">
+                <h2 className="text-xl sm:text-2xl font-bold text-purple-800 animate-blink-light">
                     शिकण्यासाठी विषय निवडा
                 </h2>
             </div>
