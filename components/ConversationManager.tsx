@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import useGeminiLive from '../hooks/useGeminiLive';
 import type { TranscriptionEntry } from '../types';
@@ -10,7 +11,6 @@ type Subject = 'marathi' | 'hindi' | 'english' | 'math';
 interface ConversationManagerProps {
   subject: Subject;
   onGoBack: () => void;
-  apiKey: string | null;
 }
 
 const uiStrings = {
@@ -68,7 +68,7 @@ const uiStrings = {
     }
 };
 
-const ConversationManager: React.FC<ConversationManagerProps> = ({ subject, onGoBack, apiKey }) => {
+const ConversationManager: React.FC<ConversationManagerProps> = ({ subject, onGoBack }) => {
   const [transcriptionHistory, setTranscriptionHistory] = useState<TranscriptionEntry[]>([]);
   const [userName, setUserName] = useState<string>('');
   const { status, error, startSession, closeSession, currentTranscription } = useGeminiLive(setTranscriptionHistory);
@@ -79,7 +79,7 @@ const ConversationManager: React.FC<ConversationManagerProps> = ({ subject, onGo
   const handleStart = (isQuizMode: boolean) => {
     if (!userName.trim()) return;
     setTranscriptionHistory([]); // Clear previous conversation
-    startSession(userName.trim(), isQuizMode, subject, apiKey);
+    startSession(userName.trim(), isQuizMode, subject);
   };
 
   const handleStop = () => {

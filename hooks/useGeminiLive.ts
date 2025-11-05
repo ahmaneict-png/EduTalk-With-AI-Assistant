@@ -1,3 +1,4 @@
+
 import { useState, useRef, useCallback, Dispatch, SetStateAction } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality, type Blob, type LiveSession } from '@google/genai';
 import { decode, decodeAudioData, createBlob } from '../utils/audio';
@@ -99,16 +100,16 @@ const useGeminiLive = (setTranscriptionHistory: Dispatch<SetStateAction<Transcri
     cleanup();
   }, [cleanup]);
 
-  const startSession = useCallback(async (userName: string, isQuizMode: boolean, subject: Subject, apiKey: string | null) => {
+  const startSession = useCallback(async (userName: string, isQuizMode: boolean, subject: Subject) => {
     if (!navigator.onLine) {
       setError("तुम्ही ऑफलाइन आहात. कृपया तुमचे इंटरनेट कनेक्शन तपासा.");
       setStatus(ConversationStatus.ERROR);
       return;
     }
 
-    const keyToUse = apiKey || process.env.API_KEY;
+    const keyToUse = process.env.API_KEY;
     if (!keyToUse) {
-        setError("API की सापडली नाही. कृपया ॲप कॉन्फिगरेशन तपासा किंवा तुमची की पुरवा.");
+        setError("API की सापडली नाही. कृपया ॲप कॉन्फिगरेशन तपासा.");
         setStatus(ConversationStatus.ERROR);
         return;
     }
@@ -282,8 +283,6 @@ const useGeminiLive = (setTranscriptionHistory: Dispatch<SetStateAction<Transcri
             setStatus(ConversationStatus.IDLE);
             cleanup();
           },
-          // FIX: Removed local environment logic and sessionStorage usage from error handling
-          // to align with API key guidelines. Error messages are simplified.
           onerror: (e: ErrorEvent) => {
             console.error("Session error:", e);
             if (!navigator.onLine) {
@@ -293,7 +292,7 @@ const useGeminiLive = (setTranscriptionHistory: Dispatch<SetStateAction<Transcri
                 if (e.message) {
                     const message = e.message.toLowerCase();
                     if (message.includes('requested entity was not found')) {
-                        userMessage = "निवडलेली API की सापडली नाही. कृपया पेज रिफ्रेश करून दुसरी की निवडा.";
+                        userMessage = "API की सापडली नाही. कृपया ॲप कॉन्फिगरेशन तपासा.";
                     } else if (message.includes('network error')) {
                          userMessage = "नेटवर्कमध्ये समस्या आहे. कृपया तुमचे इंटरनेट कनेक्शन तपासा आणि पेज रिफ्रेश करून पुन्हा प्रयत्न करा.";
                     } else if (message.includes('service is currently unavailable')) {
@@ -301,9 +300,9 @@ const useGeminiLive = (setTranscriptionHistory: Dispatch<SetStateAction<Transcri
                     } else if (message.includes('invalid argument')) {
                         userMessage = "चुकीची विनंती पाठवली गेली. कृपया पुन्हा प्रयत्न करा.";
                     } else if (message.includes('api key not valid')) {
-                        userMessage = "तुमची API की चुकीची आहे. कृपया पेज रिफ्रेश करून योग्य की निवडा.";
+                        userMessage = "तुमची API की अवैध आहे. कृपया ॲप कॉन्फिगरेशन तपासा.";
                     } else if (message.includes('does not have permission')) {
-                        userMessage = "API की वापरण्याची परवानगी नाही. कृपया खात्री करा की तुमची API की योग्य आहे आणि आवश्यक परवानग्या सक्षम केल्या आहेत.";
+                        userMessage = "API की वापरण्याची परवानगी नाही. कृपया ॲप कॉन्फिगरेशन तपासा.";
                     }
                 }
                 setError(userMessage);

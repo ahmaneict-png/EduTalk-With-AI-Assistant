@@ -1,10 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import LanguageSelector from './components/LanguageSelector';
 import ConversationManager from './components/ConversationManager';
 import InstallButton from './components/InstallButton';
-import ShareButton from './components/ShareButton';
-import ShareModal from './components/ShareModal';
 
 
 // Define the type for the BeforeInstallPromptEvent
@@ -17,97 +16,10 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
-// Add window.aistudio type definition
-declare global {
-  // Fix: Define the AIStudio interface inside `declare global` to resolve a TypeScript type conflict
-  // with a potentially existing global definition and ensure a single, globally-scoped type.
-  interface AIStudio {
-    hasSelectedApiKey: () => Promise<boolean>;
-    openSelectKey: () => Promise<void>;
-  }
-  
-  interface Window {
-    aistudio?: AIStudio;
-  }
-}
-
-
 const App: React.FC = () => {
   const [selectedSubject, setSelectedSubject] = useState<'marathi' | 'hindi' | 'english' | 'math' | null>(null);
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isShareMode, setIsShareMode] = useState(false);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
-  const [isKeySelected, setIsKeySelected] = useState(false);
-  const [isCheckingKey, setIsCheckingKey] = useState(true);
-  const [userApiKey, setUserApiKey] = useState<string | null>(() => sessionStorage.getItem('gemini-api-key'));
-  const [apiKeyInput, setApiKeyInput] = useState('');
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('mode') === 'share') {
-      setIsShareMode(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    const checkApiKey = async () => {
-      setIsCheckingKey(true);
-      
-      // 1. Check URL Hash for shared key
-      const hash = window.location.hash;
-      if (hash.startsWith('#key=')) {
-        try {
-          const encodedKey = hash.substring(5);
-          const decodedKey = atob(encodedKey);
-          if (decodedKey) {
-            sessionStorage.setItem('gemini-api-key', decodedKey);
-            setUserApiKey(decodedKey);
-            setIsKeySelected(true);
-            // Clean the URL hash to hide the key from the user
-            window.history.replaceState(null, '', window.location.pathname + window.location.search);
-            setIsCheckingKey(false);
-            return;
-          }
-        } catch (e) {
-          console.error("Failed to decode API key from URL hash.", e);
-          // Clear potentially corrupted hash
-          window.history.replaceState(null, '', window.location.pathname + window.location.search);
-        }
-      }
-
-      // In share mode, we don't need an API key to show the initial page.
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('mode') === 'share') {
-        setIsKeySelected(true);
-        setIsCheckingKey(false);
-        return;
-      }
-
-      // 2. Check AI Studio
-      if (window.aistudio) {
-        try {
-          const hasKey = await window.aistudio.hasSelectedApiKey();
-          setIsKeySelected(hasKey);
-        } catch (e) {
-          console.error("Error checking for API key:", e);
-          setIsKeySelected(false); // Assume no key if check fails
-        }
-      } else {
-        // 3. Not in AI Studio, check for user key in session storage.
-        const sessionKey = sessionStorage.getItem('gemini-api-key');
-        if (sessionKey) {
-            setUserApiKey(sessionKey);
-            setIsKeySelected(true);
-        } else {
-            setIsKeySelected(false);
-        }
-      }
-      setIsCheckingKey(false);
-    };
-    checkApiKey();
-  }, []);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -147,99 +59,6 @@ const App: React.FC = () => {
     localStorage.setItem('installBannerDismissed', 'true');
     setShowInstallBanner(false);
   };
-  
-  const handleSelectKey = async () => {
-    if (window.aistudio) {
-      await window.aistudio.openSelectKey();
-      setIsKeySelected(true);
-    }
-  };
-
-  const handleApiKeySubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (apiKeyInput.trim()) {
-      sessionStorage.setItem('gemini-api-key', apiKeyInput.trim());
-      setUserApiKey(apiKeyInput.trim());
-      setIsKeySelected(true);
-    }
-  };
-
-  const getOriginalAppUrl = () => {
-    let origin = window.location.origin;
-    if (origin.includes('.scf.usercontent.googhttps')) {
-      origin = origin.replace('.scf.usercontent.googhttps', '.aistudio-app.google.com');
-    }
-    return `${origin}${window.location.pathname}`;
-  };
-
-  const generateShareUrl = () => {
-    if (!userApiKey) return '';
-    // Base64 encode the key to make it URL-safe
-    const encodedKey = btoa(userApiKey);
-    // Use the current URL's origin and pathname
-    return `${window.location.origin}${window.location.pathname}#key=${encodedKey}`;
-  };
-
-  if (isCheckingKey) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#fff5e6] to-[#f3e6ff] flex items-center justify-center">
-        <div className="text-purple-700 font-semibold text-lg animate-pulse">ॲप लोड होत आहे...</div>
-      </div>
-    );
-  }
-  
-  if (!isKeySelected) {
-     if (!window.aistudio) {
-       return (
-         <div className="min-h-screen bg-gradient-to-br from-[#fff5e6] to-[#f3e6ff] flex items-center justify-center p-4">
-          <div className="max-w-xl mx-auto text-center bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl p-6 md:p-10">
-            <h2 className="text-2xl font-bold text-purple-800">Gemini API की आवश्यक आहे</h2>
-            <p className="mt-4 text-gray-700">
-              हे ॲप वापरण्यासाठी, तुम्हाला तुमची स्वतःची Google AI Studio API की आवश्यक आहे. तुमची की सार्वजनिकरित्या शेअर केली जाणार नाही आणि फक्त तुमच्या ब्राउझरमध्ये सेव्ह केली जाईल.
-            </p>
-             <p className="mt-2 text-gray-600">
-              तुम्ही तुमची API की <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline font-semibold">Google AI Studio</a> वरून मिळवू शकता.
-            </p>
-            <form onSubmit={handleApiKeySubmit} className="mt-6 flex flex-col items-center gap-4">
-              <input
-                type="password"
-                value={apiKeyInput}
-                onChange={(e) => setApiKeyInput(e.target.value)}
-                placeholder="तुमची API की येथे पेस्ट करा"
-                className="w-full max-w-sm px-4 py-2 text-lg text-center border-2 border-purple-300 rounded-full focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition"
-                aria-label="API Key Input"
-              />
-              <button
-                type="submit"
-                className="inline-block bg-purple-600 text-white font-bold py-3 px-8 rounded-full hover:bg-purple-700 transition-colors shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
-                disabled={!apiKeyInput.trim()}
-              >
-                की सेव्ह करा आणि सुरू करा
-              </button>
-            </form>
-          </div>
-        </div>
-      );
-    }
-    return (
-       <div className="min-h-screen bg-gradient-to-br from-[#fff5e6] to-[#f3e6ff] flex items-center justify-center p-4">
-        <div className="max-w-xl mx-auto text-center bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl p-6 md:p-10">
-          <h2 className="text-2xl font-bold text-purple-800">API की आवश्यक आहे</h2>
-          <p className="mt-4 text-gray-700">
-            हे ॲप वापरण्यासाठी, तुम्हाला Google AI Studio API की निवडणे आवश्यक आहे.
-            तुमच्या वापरासाठी बिलिंग लागू होऊ शकते. अधिक माहितीसाठी, कृपया <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline font-semibold">बिलिंग दस्तऐवज</a> पहा.
-          </p>
-          <button
-            onClick={handleSelectKey}
-            className="mt-6 inline-block bg-purple-600 text-white font-bold py-3 px-8 rounded-full hover:bg-purple-700 transition-colors shadow-lg"
-          >
-            API की निवडा
-          </button>
-        </div>
-      </div>
-    );
-  }
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#fff5e6] to-[#f3e6ff] text-gray-800 p-4 sm:p-6 md:p-8">
@@ -259,27 +78,16 @@ const App: React.FC = () => {
             </svg>
             <span className="text-lg">ॲपबद्दल प्रतिक्रिया द्या</span>
           </a>
-          {isKeySelected && !isShareMode && !window.aistudio && (
-            <ShareButton onClick={() => setIsShareModalOpen(true)} />
-          )}
         </div>
 
         <main className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl p-6 md:p-10">
-          {isShareMode ? (
-            <div className="text-center p-6 bg-purple-100/50 rounded-2xl border-2 border-dashed border-purple-300">
-              <p className="text-lg font-semibold text-purple-800">हे ॲपचे डेमो व्हर्जन आहे.</p>
-              <p className="text-gray-600 mt-2">AI सहाय्यक वापरण्यासाठी, कृपया मूळ ॲपला भेट द्या.</p>
-              <a href={getOriginalAppUrl()} className="mt-4 inline-block bg-purple-600 text-white font-bold py-2 px-6 rounded-full hover:bg-purple-700 transition-colors">
-                मूळ ॲपवर जा
-              </a>
-            </div>
-          ) : !selectedSubject ? (
+          {!selectedSubject ? (
              <LanguageSelector onSelect={handleSubjectSelect} />
           ) : (
-            <ConversationManager subject={selectedSubject} onGoBack={handleGoBack} apiKey={userApiKey} />
+            <ConversationManager subject={selectedSubject} onGoBack={handleGoBack} />
           )}
         </main>
-        {showInstallBanner && !isShareMode && (
+        {showInstallBanner && (
            <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-purple-600 to-pink-600 p-4 text-white shadow-lg animate-fade-in-up flex items-center justify-center gap-4 sm:gap-8 z-50">
             <div className="text-center sm:text-left flex-grow">
               <p className="font-bold text-lg">ॲप इन्स्टॉल करा!</p>
@@ -297,11 +105,6 @@ const App: React.FC = () => {
             </button>
           </div>
         )}
-        <ShareModal 
-          isOpen={isShareModalOpen}
-          onClose={() => setIsShareModalOpen(false)}
-          shareUrl={generateShareUrl()}
-        />
         <footer className="mt-8 text-center text-sm text-gray-500">
           <p>© 2024 श्री. अनिल माने. सर्व हक्क राखीव.</p>
         </footer>
