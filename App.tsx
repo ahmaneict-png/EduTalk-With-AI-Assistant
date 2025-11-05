@@ -3,6 +3,9 @@ import Header from './components/Header';
 import LanguageSelector from './components/LanguageSelector';
 import ConversationManager from './components/ConversationManager';
 import InstallButton from './components/InstallButton';
+import ShareButton from './components/ShareButton';
+import ShareModal from './components/ShareModal';
+
 
 // Define the type for the BeforeInstallPromptEvent
 interface BeforeInstallPromptEvent extends Event {
@@ -38,6 +41,8 @@ const App: React.FC = () => {
   const [isCheckingKey, setIsCheckingKey] = useState(true);
   const [userApiKey, setUserApiKey] = useState<string | null>(() => sessionStorage.getItem('gemini-api-key'));
   const [apiKeyInput, setApiKeyInput] = useState('');
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -48,6 +53,30 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const checkApiKey = async () => {
+      setIsCheckingKey(true);
+      
+      // 1. Check URL Hash for shared key
+      const hash = window.location.hash;
+      if (hash.startsWith('#key=')) {
+        try {
+          const encodedKey = hash.substring(5);
+          const decodedKey = atob(encodedKey);
+          if (decodedKey) {
+            sessionStorage.setItem('gemini-api-key', decodedKey);
+            setUserApiKey(decodedKey);
+            setIsKeySelected(true);
+            // Clean the URL hash to hide the key from the user
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            setIsCheckingKey(false);
+            return;
+          }
+        } catch (e) {
+          console.error("Failed to decode API key from URL hash.", e);
+          // Clear potentially corrupted hash
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      }
+
       // In share mode, we don't need an API key to show the initial page.
       const params = new URLSearchParams(window.location.search);
       if (params.get('mode') === 'share') {
@@ -56,6 +85,7 @@ const App: React.FC = () => {
         return;
       }
 
+      // 2. Check AI Studio
       if (window.aistudio) {
         try {
           const hasKey = await window.aistudio.hasSelectedApiKey();
@@ -65,12 +95,13 @@ const App: React.FC = () => {
           setIsKeySelected(false); // Assume no key if check fails
         }
       } else {
-        // Not in AI Studio, check for user key in session storage or env var.
+        // 3. Not in AI Studio, check for user key in session storage.
         const sessionKey = sessionStorage.getItem('gemini-api-key');
-        const hasKey = !!process.env.API_KEY || !!sessionKey;
-        setIsKeySelected(hasKey);
         if (sessionKey) {
-          setUserApiKey(sessionKey);
+            setUserApiKey(sessionKey);
+            setIsKeySelected(true);
+        } else {
+            setIsKeySelected(false);
         }
       }
       setIsCheckingKey(false);
@@ -141,6 +172,14 @@ const App: React.FC = () => {
     return `${origin}${window.location.pathname}`;
   };
 
+  const generateShareUrl = () => {
+    if (!userApiKey) return '';
+    // Base64 encode the key to make it URL-safe
+    const encodedKey = btoa(userApiKey);
+    // Use the current URL's origin and pathname
+    return `${window.location.origin}${window.location.pathname}#key=${encodedKey}`;
+  };
+
   if (isCheckingKey) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#fff5e6] to-[#f3e6ff] flex items-center justify-center">
@@ -207,7 +246,7 @@ const App: React.FC = () => {
       <div className="max-w-4xl mx-auto">
         <Header subject={selectedSubject} />
 
-        <div className="my-6 text-center">
+        <div className="my-6 flex flex-col sm:flex-row items-center justify-center flex-wrap gap-4">
           <a
             href="https://wa.me/919766599780?text=EduTalk%20ॲपबद्दल%20माझा%20अभिप्राय:"
             target="_blank"
@@ -220,6 +259,9 @@ const App: React.FC = () => {
             </svg>
             <span className="text-lg">ॲपबद्दल प्रतिक्रिया द्या</span>
           </a>
+          {isKeySelected && !isShareMode && !window.aistudio && (
+            <ShareButton onClick={() => setIsShareModalOpen(true)} />
+          )}
         </div>
 
         <main className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl p-6 md:p-10">
@@ -255,6 +297,11 @@ const App: React.FC = () => {
             </button>
           </div>
         )}
+        <ShareModal 
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          shareUrl={generateShareUrl()}
+        />
         <footer className="mt-8 text-center text-sm text-gray-500">
           <p>© 2024 श्री. अनिल माने. सर्व हक्क राखीव.</p>
         </footer>
