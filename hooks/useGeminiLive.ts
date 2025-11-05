@@ -99,11 +99,18 @@ const useGeminiLive = (setTranscriptionHistory: Dispatch<SetStateAction<Transcri
     cleanup();
   }, [cleanup]);
 
-  const startSession = useCallback(async (userName: string, isQuizMode: boolean, subject: Subject) => {
+  const startSession = useCallback(async (userName: string, isQuizMode: boolean, subject: Subject, apiKey: string | null) => {
     if (!navigator.onLine) {
       setError("तुम्ही ऑफलाइन आहात. कृपया तुमचे इंटरनेट कनेक्शन तपासा.");
       setStatus(ConversationStatus.ERROR);
       return;
+    }
+
+    const keyToUse = apiKey || process.env.API_KEY;
+    if (!keyToUse) {
+        setError("API की सापडली नाही. कृपया ॲप कॉन्फिगरेशन तपासा किंवा तुमची की पुरवा.");
+        setStatus(ConversationStatus.ERROR);
+        return;
     }
     
     setStatus(ConversationStatus.CONNECTING);
@@ -115,8 +122,7 @@ const useGeminiLive = (setTranscriptionHistory: Dispatch<SetStateAction<Transcri
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
 
-      // FIX: Per guidelines, initialize with process.env.API_KEY
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey: keyToUse });
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
       outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
       

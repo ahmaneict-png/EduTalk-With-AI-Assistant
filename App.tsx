@@ -36,6 +36,8 @@ const App: React.FC = () => {
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [isKeySelected, setIsKeySelected] = useState(false);
   const [isCheckingKey, setIsCheckingKey] = useState(true);
+  const [userApiKey, setUserApiKey] = useState<string | null>(() => sessionStorage.getItem('gemini-api-key'));
+  const [apiKeyInput, setApiKeyInput] = useState('');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -63,8 +65,13 @@ const App: React.FC = () => {
           setIsKeySelected(false); // Assume no key if check fails
         }
       } else {
-        // Not in AI Studio, assume API_KEY is in environment per guidelines.
-        setIsKeySelected(true);
+        // Not in AI Studio, check for user key in session storage or env var.
+        const sessionKey = sessionStorage.getItem('gemini-api-key');
+        const hasKey = !!process.env.API_KEY || !!sessionKey;
+        setIsKeySelected(hasKey);
+        if (sessionKey) {
+          setUserApiKey(sessionKey);
+        }
       }
       setIsCheckingKey(false);
     };
@@ -117,6 +124,15 @@ const App: React.FC = () => {
     }
   };
 
+  const handleApiKeySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (apiKeyInput.trim()) {
+      sessionStorage.setItem('gemini-api-key', apiKeyInput.trim());
+      setUserApiKey(apiKeyInput.trim());
+      setIsKeySelected(true);
+    }
+  };
+
   const getOriginalAppUrl = () => {
     let origin = window.location.origin;
     if (origin.includes('.scf.usercontent.googhttps')) {
@@ -134,6 +150,38 @@ const App: React.FC = () => {
   }
   
   if (!isKeySelected) {
+     if (!window.aistudio) {
+       return (
+         <div className="min-h-screen bg-gradient-to-br from-[#fff5e6] to-[#f3e6ff] flex items-center justify-center p-4">
+          <div className="max-w-xl mx-auto text-center bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl p-6 md:p-10">
+            <h2 className="text-2xl font-bold text-purple-800">Gemini API की आवश्यक आहे</h2>
+            <p className="mt-4 text-gray-700">
+              हे ॲप वापरण्यासाठी, तुम्हाला तुमची स्वतःची Google AI Studio API की आवश्यक आहे. तुमची की सार्वजनिकरित्या शेअर केली जाणार नाही आणि फक्त तुमच्या ब्राउझरमध्ये सेव्ह केली जाईल.
+            </p>
+             <p className="mt-2 text-gray-600">
+              तुम्ही तुमची API की <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline font-semibold">Google AI Studio</a> वरून मिळवू शकता.
+            </p>
+            <form onSubmit={handleApiKeySubmit} className="mt-6 flex flex-col items-center gap-4">
+              <input
+                type="password"
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                placeholder="तुमची API की येथे पेस्ट करा"
+                className="w-full max-w-sm px-4 py-2 text-lg text-center border-2 border-purple-300 rounded-full focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition"
+                aria-label="API Key Input"
+              />
+              <button
+                type="submit"
+                className="inline-block bg-purple-600 text-white font-bold py-3 px-8 rounded-full hover:bg-purple-700 transition-colors shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled={!apiKeyInput.trim()}
+              >
+                की सेव्ह करा आणि सुरू करा
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
     return (
        <div className="min-h-screen bg-gradient-to-br from-[#fff5e6] to-[#f3e6ff] flex items-center justify-center p-4">
         <div className="max-w-xl mx-auto text-center bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl p-6 md:p-10">
@@ -186,7 +234,7 @@ const App: React.FC = () => {
           ) : !selectedSubject ? (
              <LanguageSelector onSelect={handleSubjectSelect} />
           ) : (
-            <ConversationManager subject={selectedSubject} onGoBack={handleGoBack} />
+            <ConversationManager subject={selectedSubject} onGoBack={handleGoBack} apiKey={userApiKey} />
           )}
         </main>
         {showInstallBanner && !isShareMode && (
