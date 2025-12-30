@@ -26,21 +26,25 @@ const uiStrings = {
         newBadge: "नवीन",
         goBack: "मागे जा",
         errorTitle: "एक त्रुटी आली:",
+        showTechnical: "तांत्रिक माहिती दाखवा",
+        hideTechnical: "तांत्रिक माहिती लपवा"
     },
     hindi: {
-        nameLabel: "प्रश्नोत्तर या प्रश्नोत्तरी शुरू करने के लिए नीचे दिए गए बॉक्स में अपना नाम टाइप करें।",
+        nameLabel: "प्रश्नोत्तर या प्रश्नोत्तरी शुरू करने के लिए अपना नाम टाइप करें।",
         namePlaceholder: "अपना नाम यहाँ लिखें",
         nameAriaLabel: "आपका नाम",
-        promptText: "नाम टाइप करने के बाद बातचीत शुरू करने के लिए यह बटन दबाएं!",
+        promptText: "बातचीत शुरू करने के लिए बटन दबाएं!",
         connecting: "कनेक्ट हो रहा है...",
         stopSession: "सत्र रोकें",
         startConversation: "बातचीत शुरू करें",
         startQuiz: "प्रश्नोत्तरी",
         newBadge: "नया",
         goBack: "वापस जाओ",
-        errorTitle: "एक त्रुटि हुई:",
+        errorTitle: "त्रुटि हुई:",
+        showTechnical: "तकनीकी विवरण दिखाएं",
+        hideTechnical: "तकनीकी विवरण छिपाएं"
     },
-    english: { // English UI uses Marathi text as requested
+    english: {
         nameLabel: "प्रश्नोत्तरे किंवा प्रश्नमंजुषा सुरू करण्यासाठी खालील चौकोनात आपले नाव टाईप करा.",
         namePlaceholder: "तुमचे नाव येथे लिहा",
         nameAriaLabel: "तुमचे नाव",
@@ -52,33 +56,38 @@ const uiStrings = {
         newBadge: "नवीन",
         goBack: "मागे जा",
         errorTitle: "एक त्रुटी आली:",
+        showTechnical: "तांत्रिक माहिती दाखवा",
+        hideTechnical: "तांत्रिक माहिती लपवा"
     },
     math: {
-        nameLabel: "गणित सराव किंवा प्रश्नमंजुषा सुरू करण्यासाठी खालील चौकोनात आपले नाव टाईप करा.",
+        nameLabel: "गणित सराव सुरू करण्यासाठी खालील चौकोनात आपले नाव टाईप करा.",
         namePlaceholder: "तुमचे नाव येथे लिहा",
         nameAriaLabel: "तुमचे नाव",
-        promptText: "नाव टाईप करून झाल्यावर सराव सुरू करण्यासाठी खालील बटण दाबा!",
+        promptText: "सराव सुरू करण्यासाठी खालील बटण दाबा!",
         connecting: "जोडत आहे...",
         stopSession: "सत्र थांबवा",
         startConversation: "सराव सुरू करा",
         startQuiz: "प्रश्नमंजुषा",
         newBadge: "नवीन",
         goBack: "मागे जा",
-        errorTitle: "एक त्रुटी आली:",
+        errorTitle: "त्रुटी आली:",
+        showTechnical: "तांत्रिक माहिती दाखवा",
+        hideTechnical: "तांत्रिक माहिती लपवा"
     }
 };
 
 const ConversationManager: React.FC<ConversationManagerProps> = ({ subject, onGoBack }) => {
   const [transcriptionHistory, setTranscriptionHistory] = useState<TranscriptionEntry[]>([]);
   const [userName, setUserName] = useState<string>('');
-  const { status, error, startSession, closeSession, currentTranscription } = useGeminiLive(setTranscriptionHistory);
+  const [showRaw, setShowRaw] = useState(false);
+  const { status, error, rawError, startSession, closeSession, currentTranscription } = useGeminiLive(setTranscriptionHistory);
 
   const isSessionRunning = status !== ConversationStatus.IDLE && status !== ConversationStatus.ERROR;
   const strings = uiStrings[subject];
 
   const handleStart = (isQuizMode: boolean) => {
     if (!userName.trim()) return;
-    setTranscriptionHistory([]); // Clear previous conversation
+    setTranscriptionHistory([]);
     startSession(userName.trim(), isQuizMode, subject);
   };
 
@@ -160,9 +169,29 @@ const ConversationManager: React.FC<ConversationManagerProps> = ({ subject, onGo
         </div>
 
         {error && (
-          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded-md" role="alert">
-            <p className="font-bold">{strings.errorTitle}</p>
-            <p>{error}</p>
+          <div className="bg-red-50 border-2 border-red-200 text-red-700 p-6 mb-4 rounded-2xl shadow-md" role="alert">
+            <div className="flex items-center gap-3 mb-2">
+              <svg className="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="font-bold text-lg">{strings.errorTitle}</p>
+            </div>
+            <p className="mb-4">{error}</p>
+            {rawError && (
+              <div className="mt-4">
+                <button 
+                  onClick={() => setShowRaw(!showRaw)}
+                  className="text-xs font-mono bg-red-100 px-2 py-1 rounded hover:bg-red-200 transition-colors"
+                >
+                  {showRaw ? strings.hideTechnical : strings.showTechnical}
+                </button>
+                {showRaw && (
+                  <pre className="mt-2 p-3 bg-black text-green-400 text-[10px] rounded overflow-x-auto whitespace-pre-wrap font-mono">
+                    {rawError}
+                  </pre>
+                )}
+              </div>
+            )}
           </div>
         )}
         
