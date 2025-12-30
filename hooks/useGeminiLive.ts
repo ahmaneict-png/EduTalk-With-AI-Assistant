@@ -27,7 +27,6 @@ const useGeminiLive = (setTranscriptionHistory: Dispatch<SetStateAction<Transcri
   const currentOutputTranscriptionRef = useRef('');
   const hasConversationStartedRef = useRef(false);
 
-
   const clearSpeechEndTimer = useCallback(() => {
     if (speechEndTimerRef.current) {
       clearTimeout(speechEndTimerRef.current);
@@ -51,7 +50,6 @@ const useGeminiLive = (setTranscriptionHistory: Dispatch<SetStateAction<Transcri
     }, 20000); // 20 seconds
   }, [clearInactivityTimer]);
 
-
   const cleanup = useCallback(() => {
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach(track => track.stop());
@@ -69,7 +67,7 @@ const useGeminiLive = (setTranscriptionHistory: Dispatch<SetStateAction<Transcri
       audioContextRef.current.close();
       audioContextRef.current = null;
     }
-     if (outputAudioContextRef.current && outputAudioContextRef.current.state !== 'closed') {
+    if (outputAudioContextRef.current && outputAudioContextRef.current.state !== 'closed') {
       outputAudioContextRef.current.close();
       outputAudioContextRef.current = null;
     }
@@ -108,9 +106,11 @@ const useGeminiLive = (setTranscriptionHistory: Dispatch<SetStateAction<Transcri
       return;
     }
 
+    // Checking specifically for the API Key in the execution environment
     const keyToUse = process.env.API_KEY;
+    
     if (!keyToUse) {
-        setError("API Key सापडली नाही. डिप्लॉयमेंटच्या वेळी 'Environment Variable' मध्ये API_KEY सेट केल्याची खात्री करा.");
+        setError("त्रुटी: 'API_KEY' सापडली नाही. उपाय: Vercel डॅशबोर्डवर Settings > Environment Variables मध्ये 'API_KEY' नाव आणि तुमची की जोडा, मग 'Redeploy' करा.");
         setStatus(ConversationStatus.ERROR);
         return;
     }
@@ -268,12 +268,12 @@ const useGeminiLive = (setTranscriptionHistory: Dispatch<SetStateAction<Transcri
             
             if (!navigator.onLine) {
                 setError("तुमची सिस्टिम ऑफलाइन आहे. इंटरनेट तपासा.");
+            } else if (errorMessage.toLowerCase().includes('api key not valid') || errorMessage.toLowerCase().includes('forbidden')) {
+                setError("तुमची API की अवैध आहे किंवा तिला परवानग्या नाहीत. कृपया नवीन की तपासा.");
             } else if (errorMessage.toLowerCase().includes('requested entity was not found')) {
-                setError("निवडलेले AI मॉडेल उपलब्ध नाही किंवा API Key मध्ये काहीतरी चूक आहे.");
-            } else if (errorMessage.toLowerCase().includes('api key not valid')) {
-                setError("तुमची API Key अवैध आहे. कृपया कॉन्फिगरेशन तपासा.");
+                setError("हे मॉडेल सध्या उपलब्ध नाही. कृपया काही वेळाने प्रयत्न करा.");
             } else {
-                setError("कनेक्शनमध्ये अडचण आली. सर्वर प्रतिसाद देत नाही.");
+                setError("कनेक्शनमध्ये अडचण आली. हे API की नसल्यामुळे किंवा सर्वर डाऊन असल्यामुळे असू शकते.");
             }
             setStatus(ConversationStatus.ERROR);
             cleanup();
